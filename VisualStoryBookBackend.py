@@ -3,7 +3,9 @@ import time
 import datetime
 #from diffusers import StableDiffusionPipeline
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
 t5tokenizer = AutoTokenizer.from_pretrained("Yuetian/T5-finetuned-storyCommonsense")
 t5model = AutoModelForSeq2SeqLM.from_pretrained("Yuetian/T5-finetuned-storyCommonsense")
@@ -24,7 +26,6 @@ def genSentenceWithPrompt():
                             attention_mask=features['attention_mask'],
                             max_length=max_length)
     returnstr = t5tokenizer.decode(output[0], skip_special_tokens=True)
-    print(type(returnstr))
     return jsonify({"generatedText": returnstr})
 """
 @app.route('/stablediffusion', methods = ['GET'])
