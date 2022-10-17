@@ -10,7 +10,7 @@ import { CopyOutlined } from '@ant-design/icons';
 const { TextArea } = Input;
 const { Title } = Typography;
 
-const InputBox = () => {
+const GeneratedTextField = () => {
     return (
         <>
             <Row>
@@ -22,4 +22,4 @@ const InputBox = () => {
     )
 };
 
-export default InputBox;
+export default GeneratedTextField;
