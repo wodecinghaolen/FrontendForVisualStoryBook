@@ -9,7 +9,7 @@ import {
     Divider
     //Col
   } from 'antd';
-  import React, {useState} from 'react';
+  import React from 'react';
   import { CopyOutlined, FileImageOutlined, FrownOutlined, RocketOutlined } from '@ant-design/icons';
   
   //const { TextArea } = Input;
@@ -43,7 +43,7 @@ import {
   
     }
 
-    const [listitem, setListItem] = useState("");
+    //const [listitem, setListItem] = useState("");
 
     const enterLoading = async (it) => {
       setLoadingState(true);
