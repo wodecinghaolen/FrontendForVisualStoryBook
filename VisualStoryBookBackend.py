@@ -1,44 +1,76 @@
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForSequenceClassification, AutoTokenizer
+from torch.cuda.amp import autocast as autocast
+import transformers
 import time
 import datetime
-#from diffusers import StableDiffusionPipeline
-from flask import Flask, request, jsonify
+from diffusers import StableDiffusionPipeline
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+import torch
+from os.path import exists
+import numpy as np
 app = Flask(__name__)
 CORS(app)
 
+access_token = "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"
+
 t5tokenizer = AutoTokenizer.from_pretrained("Yuetian/T5-finetuned-storyCommonsense")
 t5model = AutoModelForSeq2SeqLM.from_pretrained("Yuetian/T5-finetuned-storyCommonsense")
-"""
-pipeSD = StableDiffusionPipeline.from_pretrained(image_gen_model_id, use_auth_token=True)
-if local:
-    pipeSD = StableDiffusionPipeline.from_pretrained(image_gen_model_id, torch_dtype=torch.float16, revision="fp16", use_auth_token=True)    
-pipeSD = pipeOPT.to(device)
-"""
+
+rbtokenizer = AutoTokenizer.from_pretrained('Yuetian/roberta-large-finetuned-plutchik-emotion')
+rbmodel = AutoModelForSequenceClassification.from_pretrained('Yuetian/roberta-large-finetuned-plutchik-emotion')
+
+pipeSD = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4", torch_dtype=torch.float16, revision="fp16", use_auth_token=access_token)
+
+device = torch.device('cuda:0')
+t5model = t5model.to(device)
+pipeSD = pipeSD.to(device)
+
 
 @app.route('/t5gen', methods = ['GET'])
 def genSentenceWithPrompt():
-    print(request.args.get('keywords'), request.args.get('emotions'))
-    input_text = f"Generate next sentence based on folowing:<extra_id_0>KEYWORDS: {request.args.get('keywords')}" + f"<extra_id_0>CONTEXT: {request.args.get('keywords')}" + f"<extra_id_0>EMOTION: {request.args.get('keywords')}"
+    input_text = f"Generate next sentence based on folowing:<extra_id_0>KEYWORDS: {request.args.get('keywords')}" + f"<extra_id_0>CONTEXT: {request.args.get('contexts')}" + f"<extra_id_0>EMOTION: {request.args.get('emotions')}"
     features = t5tokenizer([input_text], return_tensors='pt')
-    max_length = 32
+    features = features.to(device)
+    max_length = 255
     output = t5model.generate(input_ids=features['input_ids'], 
                             attention_mask=features['attention_mask'],
                             max_length=max_length)
     returnstr = t5tokenizer.decode(output[0], skip_special_tokens=True)
     return jsonify({"generatedText": returnstr})
-"""
+
 @app.route('/stablediffusion', methods = ['GET'])
 def genImg():
-    prompt = f"A colorful photo telling a story that {sentence.lower()}" # try tuning
-    with autocast("cuda"):
+    jpgname = "./images/"+request.args.get('sentence')+'.jpg'
+    #if(exists(jpgname) == False):
+    prompt = f"A colorful photo telling a story that {request.args.get('sentence')}" # try tuning
+    with autocast():
         image = pipeSD(prompt, guidance_scale=7.5).images[0]  
-    now = datetime.datetime.now()
-    now = now.replace(":", ".")
-    jpgname = "./images/"+now+'.jpg'
     image.save(jpgname)
-    return jpgname
-  """
+    return send_file(f"{jpgname}")
+
+@app.route('/roberta-large', methods = ['GET'])
+def genEmoSuggestion():
+    text = request.args.get('sentence')
+    encoded_input = rbtokenizer(text, return_tensors='pt')
+    outputs = rbmodel(**encoded_input)
+    logits = outputs.logits
+    sigmoid = torch.nn.Sigmoid()
+    probs = sigmoid(logits.squeeze().cpu())
+    predictions = np.zeros(probs.shape)
+    predictions[np.where(probs >= 0.5)] = 1
+    labels = ['joy',
+     'trust',
+     'fear',
+     'surprise',
+     'sadness',
+     'disgust',
+     'anger',
+     'anticipation']
+    id2label = {idx:label for idx, label in enumerate(labels)}
+    predicted_labels = [id2label[idx] for idx, label in enumerate(predictions) if label == 1.0]
+    return jsonify({"generatedEmo": predicted_labels})
+
 if __name__ == '__main__':
     app.run()
   
