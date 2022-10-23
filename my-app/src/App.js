@@ -19,7 +19,7 @@ function App() {
     // send request
 
     try {
-      const url = new URL("http://localhost:5000/t5gen");
+      const url = new URL("http://35.239.173.52:5000/t5gen");
       url.searchParams.append('keywords', keywords);
       url.searchParams.append('contexts', contexts);
       url.searchParams.append('emotions', emotions);
