@@ -8,7 +8,11 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import torch
 from os.path import exists
+import os
 import numpy as np
+from hashlib import md5
+from time import localtime
+
 app = Flask(__name__)
 CORS(app)
 
@@ -17,15 +21,14 @@ access_token = "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"
 t5tokenizer = AutoTokenizer.from_pretrained("Yuetian/T5-finetuned-storyCommonsense")
 t5model = AutoModelForSeq2SeqLM.from_pretrained("Yuetian/T5-finetuned-storyCommonsense")
 
-rbtokenizer = AutoTokenizer.from_pretrained('Yuetian/roberta-large-finetuned-plutchik-emotion')
-rbmodel = AutoModelForSequenceClassification.from_pretrained('Yuetian/roberta-large-finetuned-plutchik-emotion')
+rbtokenizer = AutoTokenizer.from_pretrained('Yuetian/deberta-finetuned-next-sentence-emotion')
+rbmodel = AutoModelForSequenceClassification.from_pretrained('Yuetian/deberta-finetuned-next-sentence-emotion')
 
 pipeSD = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4", torch_dtype=torch.float16, revision="fp16", use_auth_token=access_token)
 
 device = torch.device('cuda:0')
 t5model = t5model.to(device)
 pipeSD = pipeSD.to(device)
-
 
 @app.route('/t5gen', methods = ['GET'])
 def genSentenceWithPrompt():
@@ -41,11 +44,13 @@ def genSentenceWithPrompt():
 
 @app.route('/stablediffusion', methods = ['GET'])
 def genImg():
-    jpgname = "./images/"+request.args.get('sentence')+'.jpg'
-    #if(exists(jpgname) == False):
+    prefix = md5(str(localtime()).encode('utf-8')).hexdigest()
+    jpgname = f"./images/{prefix}_({request.args.get('sentence')}).jpg"  #"./images/"+request.args.get('sentence')+'.jpg'
+    if(exists(jpgname) == True):
+        os.remove(jpgname)
     prompt = f"A colorful photo telling a story that {request.args.get('sentence')}" # try tuning
     with autocast():
-        image = pipeSD(prompt, guidance_scale=7.5).images[0]  
+        image = pipeSD(prompt, guidance_scale=7.5).images[0] 
     image.save(jpgname)
     return send_file(f"{jpgname}")
 

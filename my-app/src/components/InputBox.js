@@ -31,7 +31,6 @@ import {
   const InputBox = ({ contexts, emotions, keywords, setContexts, setEmotions, setKeywords, resetAll, generate }) => {
     const printEmo = (checkedValues) =>{
       setEmotions(checkedValues)
-      console.log(emotions)
     }
     return (
       <>

@@ -9,13 +9,33 @@ import {
     Divider
     //Col
   } from 'antd';
-  import React from 'react';
+  import React, {useState} from 'react';
   import { CopyOutlined, FileImageOutlined, FrownOutlined, RocketOutlined } from '@ant-design/icons';
   
   //const { TextArea } = Input;
   const { Title } = Typography;
   
-  const GeneratedTextField = ({contexts, listdata, imageUrl, loadingState, open, setEmotions, setOpen, setLoadingState, setContexts, setListData, copyGeneratedText, imageGenerate}) => {
+  const GeneratedTextField = ({contexts, listdata, setEmotions, setContexts, setListData, copyGeneratedText}) => {
+    
+    const [loadingState, setLoadingState] = useState(false);
+    const [open, setOpen] = useState(Array.from({length: listdata.length}, (v, i) => false));
+    const [imageUrl, setImageUrl] = useState("");
+
+    const generateImage = async (sentence) => {
+      // send request
+  
+      try {
+        const Url = new URL("http://localhost:5000/stablediffusion");
+        Url.searchParams.append('sentence', sentence);
+        console.log(Url)
+        await fetch(Url)
+        .then(data =>{
+          setImageUrl(data.url)
+        }) 
+      } catch (err) {
+        console.log(err.message); //can be console.error
+      }
+    }
 
     const generateEmo = (it) => {
       // send request
@@ -23,16 +43,13 @@ import {
       try {
         const url = new URL("http://localhost:5000/roberta-large");
         url.searchParams.append('sentence', it);
-        //const res = fetch(url).then(res => res.json());
-        //const text = res.generatedText
         fetch(url)
           .then(data => data.json())
           .then(data => {
           // The line below is a declaration of a array
             const plutchikEmotion = data.generatedEmo
             setEmotions([])
-            setEmotions(plutchikEmotion) 
-            console.log(plutchikEmotion)     
+            setEmotions(plutchikEmotion)   
           })
           .catch(e => console.error(e));
         // set generatedText
@@ -43,20 +60,22 @@ import {
   
     }
 
-    //const [listitem, setListItem] = useState("");
-
-    const enterLoading = async (it) => {
+    const enterLoading = async (it, index) => {
       setLoadingState(true);
-      await imageGenerate(it)
-      showModal()
-      setLoadingState(false)
+      await generateImage(it).then(() => {
+        showModal(index)
+        setLoadingState(false)
+      })
     };
 
-    const showModal = async() => {
-      setOpen(true);
+    const showModal = (index) => {
+      const newOpen = open;
+      newOpen[index] = true;
+      setOpen(prev => newOpen);
     };
-    const hideModal = () => {
-      setOpen(false);
+    
+    const hideModal = (index) => {
+      setOpen(Array.from({length: listdata.length}, (v, i) => false));
     };
 
     return (
@@ -71,23 +90,22 @@ import {
           footer={<div>End</div>}
           bordered
           dataSource={listdata}
-          renderItem={(item) => <List.Item>{
-            <>
-              <Row>
-                {item}
-              </Row>
-              <Row>
-                <>
-                  <Button icon={<FileImageOutlined />} type="primary" size="small" loading={loadingState} onClick={() => enterLoading(item)} />
+          renderItem={(item, index) => (
+            <List.Item>
+              <>
+                <Row>
+                  {item}
+                </Row>
+                <Row>
+                  <Button icon={<FileImageOutlined />} type="primary" size="small" loading={loadingState} onClick={async () => await enterLoading(item, index)} />
                   <Modal
-                    title="Modal"
-                    open={open}
-                    onOk={hideModal}
-                    onCancel={hideModal}
+                    open={open[index]}
+                    onOk={() => hideModal(index)}
+                    onCancel={() => hideModal(index)}
                     okText="OK"
                     cancelText="Cancel"
                   >
-                    <Row>
+                    <Row justify="center">
                       <Divider>{item}</Divider>
                       <Image
                         width={200}
@@ -95,13 +113,13 @@ import {
                       />
                     </Row>
                   </Modal>
-                </>
-                <Button onClick={() => generateEmo(item)} icon={<RocketOutlined />} type="default" size="small" />
-                <Button onClick={() => setContexts(contexts+' '+item)} icon={<CopyOutlined />} type="default" size="small" />
-                <Button onClick={() => setListData((current) => current.filter((it) => it !== item))} icon={<FrownOutlined />} type="default" size="small" danger/>
-              </Row>
-            </>
-          }</List.Item>}
+                  <Button onClick={() => generateEmo(item)} icon={<RocketOutlined />} type="default" size="small" />
+                  <Button onClick={() => setContexts(contexts+' '+item)} icon={<CopyOutlined />} type="default" size="small" />
+                  <Button onClick={() => setListData((current) => current.filter((it) => it !== item))} icon={<FrownOutlined />} type="default" size="small" danger/>
+                </Row>
+              </>
+            </List.Item>
+          )}
         />
       </>
     )

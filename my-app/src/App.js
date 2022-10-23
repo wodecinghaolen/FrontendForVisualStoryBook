@@ -14,9 +14,6 @@ function App() {
   const [keywords, setKeywords] = useState("");
   const [generatedText, setGeneratedText] = useState("");
   const [listdata, setListData] = useState([]);
-  const [imageUrl, setImageUrl] = useState("");
-  const [loadingState, setLoadingState] = useState(false);
-  const [open, setOpen] = useState(false);
 
   const generate = () => {
     // send request
@@ -28,19 +25,16 @@ function App() {
       url.searchParams.append('emotions', emotions);
       //const res = fetch(url).then(res => res.json());
       //const text = res.generatedText
+
+      if(!listdata || !listdata.length){
+        setListData(prev => [...prev, contexts]);
+      }
       fetch(url)
         .then(data => data.json())
         .then(data => {
         // The line below is a declaration of a array
           const text = data.generatedText
-          if(listdata.length === 0){
-            setListData(current => [...current, contexts]);
-            setListData(current => [...current, text]);
-          }
-          else
-          {
-            setListData([...listdata, text]);
-          }          
+          setListData(prev => [...prev, text]);      
         })
         .catch(e => console.error(e));
       // set generatedText
@@ -48,25 +42,6 @@ function App() {
     } catch (err) {
       console.log(err.message); //can be console.error
     }
-
-  }
-
-  const imageGenerate = async (sentence) => {
-    // send request
-
-    try {
-      const Url = new URL("http://localhost:5000/stablediffusion");
-      Url.searchParams.append('sentence', sentence);
-      await fetch(Url)
-      .then(data =>{
-        setImageUrl(data.url)
-      })
-      .catch(e => console.error(e));
-      
-    } catch (err) {
-      console.log(err.message); //can be console.error
-    }
-
   }
 
   const resetAll = () => {
@@ -87,7 +62,7 @@ function App() {
         <InputBox contexts={contexts} emotions={emotions} keywords={keywords} setContexts={setContexts} setEmotions={setEmotions} setKeywords={setKeywords} resetAll={resetAll} generate={generate} />
       </Col>
       <Col span={7}>
-        <GeneratedTextField contexts={contexts} listdata={listdata} imageUrl={imageUrl} loadingState={loadingState} open={open} emotions={emotions} setEmotions={setEmotions} setOpen={setOpen} setLoadingState={setLoadingState} setContexts={setContexts} setListData={setListData} copyGeneratedText={copyGeneratedText} imageGenerate={imageGenerate}/>
+        <GeneratedTextField contexts={contexts} listdata={listdata} emotions={emotions} setEmotions={setEmotions} setContexts={setContexts} setListData={setListData} copyGeneratedText={copyGeneratedText}/>
       </Col>
     </Row>
   );
