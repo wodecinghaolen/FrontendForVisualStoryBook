@@ -50,7 +50,9 @@ def genImg():
     jpgname = f"./images/{prefix}_({request.args.get('sentence')}).jpg"  #"./images/"+request.args.get('sentence')+'.jpg'
     if(exists(jpgname) == True):
         os.remove(jpgname)
-    prompt = f"A colorful photo telling a story that {request.args.get('sentence')}" # try tuning
+    #prompt = f"best quality, line art, illutration, story, {request.args.get('sentence').lower()}" #try tuning
+    #prompt = f"action, a illustration of {request.args.get('sentence').lower()}" #try tuning
+    prompt = f"action, a colored illustration of {request.args.get('sentence').lower()}" #try tuning
     with autocast():
         image = pipeSD(prompt, guidance_scale=7.5).images[0] 
     image.save(jpgname)

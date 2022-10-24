@@ -15,7 +15,7 @@ import {
   const { Title } = Typography;
   const hovercontent = (
     <div>
-      <p>Input format: kw1;kw2;kw3;...</p>
+      <p>Input format: kw1, kw2, kw3, ...</p>
     </div>
   );
   const options = [

@@ -3,11 +3,12 @@ import { useState } from 'react';
 import {
   Row,
   Col,
+  Layout
 } from 'antd';
 import InputBox from './components/InputBox'
 import GeneratedTextField from './components/GeneratedTextField'
 //import { LoadingOutlined } from '@ant-design/icons';
-
+const { Header, Footer, Content } = Layout;
 function App() {
   const [contexts, setContexts] = useState("");
   const [emotions, setEmotions] = useState([]);
@@ -57,14 +58,20 @@ function App() {
   }
 
   return (
-    <Row type="flex" justify="center" align="middle" style={{ minHeight: '75vh' }} gutter={[72, 20]}>
-      <Col span={7}>
-        <InputBox contexts={contexts} emotions={emotions} keywords={keywords} setContexts={setContexts} setEmotions={setEmotions} setKeywords={setKeywords} resetAll={resetAll} generate={generate} />
-      </Col>
-      <Col span={7}>
-        <GeneratedTextField contexts={contexts} listdata={listdata} emotions={emotions} setEmotions={setEmotions} setContexts={setContexts} setListData={setListData} copyGeneratedText={copyGeneratedText}/>
-      </Col>
-    </Row>
+    <Layout>
+      <Header>Header</Header>
+      <Content>
+        <Row type="flex" justify="center" align="middle" style={{ minHeight: '75vh' }} gutter={[72, 20]}>
+          <Col span={7}>
+            <InputBox contexts={contexts} emotions={emotions} keywords={keywords} setContexts={setContexts} setEmotions={setEmotions} setKeywords={setKeywords} resetAll={resetAll} generate={generate} />
+          </Col>
+          <Col span={7}>
+            <GeneratedTextField contexts={contexts} listdata={listdata} emotions={emotions} setEmotions={setEmotions} setContexts={setContexts} setListData={setListData} copyGeneratedText={copyGeneratedText}/>
+          </Col>
+        </Row>
+      </Content>
+      <Footer>Visual Story Generation Based on Emotional and Keyword Scheme @2022 Created by Yuetian Chen, Ruohua Li, Bowen Shi, Peiru Liu, Mei Si”</Footer>
+    </Layout>
   );
 }
 
