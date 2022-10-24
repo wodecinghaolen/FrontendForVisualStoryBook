@@ -58,7 +58,7 @@ function App() {
   }
 
   return (
-    <Layout>
+    <Layout style={{height:"100vh"}}>
       <Header>Header</Header>
       <Content>
         <Row type="flex" justify="center" align="middle" style={{ minHeight: '75vh' }} gutter={[72, 20]}>
@@ -70,7 +70,11 @@ function App() {
           </Col>
         </Row>
       </Content>
-      <Footer>Visual Story Generation Based on Emotional and Keyword Scheme @2022 Created by Yuetian Chen, Ruohua Li, Bowen Shi, Peiru Liu, Mei Si”</Footer>
+      <Footer
+        style={{
+          textAlign: 'center',
+        }}
+      >Visual Story Generation Based on Emotional and Keyword Scheme @2022 Created by Yuetian Chen, Ruohua Li, Bowen Shi, Peiru Liu, Mei Si</Footer>
     </Layout>
   );
 }
