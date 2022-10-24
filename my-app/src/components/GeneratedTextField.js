@@ -41,7 +41,7 @@ import {
       // send request
   
       try {
-        const url = new URL("http://35.239.173.52:5000/roberta-large");
+        const url = new URL("http://35.239.173.52:5000/roberta-large"); //35.239.173.52
         url.searchParams.append('sentence', it);
         fetch(url)
           .then(data => data.json())

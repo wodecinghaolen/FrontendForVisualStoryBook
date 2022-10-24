@@ -12,6 +12,7 @@ import os
 import numpy as np
 from hashlib import md5
 from time import localtime
+import sng_parser
 
 app = Flask(__name__)
 CORS(app)
@@ -29,6 +30,7 @@ pipeSD = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4"
 device = torch.device('cuda:0')
 t5model = t5model.to(device)
 pipeSD = pipeSD.to(device)
+rbmodel = rbmodel.to(device)
 
 @app.route('/t5gen', methods = ['GET'])
 def genSentenceWithPrompt():
@@ -58,6 +60,7 @@ def genImg():
 def genEmoSuggestion():
     text = request.args.get('sentence')
     encoded_input = rbtokenizer(text, return_tensors='pt')
+    encoded_input = encoded_input.to(device)
     outputs = rbmodel(**encoded_input)
     logits = outputs.logits
     sigmoid = torch.nn.Sigmoid()
@@ -75,6 +78,13 @@ def genEmoSuggestion():
     id2label = {idx:label for idx, label in enumerate(labels)}
     predicted_labels = [id2label[idx] for idx, label in enumerate(predictions) if label == 1.0]
     return jsonify({"generatedEmo": predicted_labels})
+
+@app.route('/sngparser', methods = ['GET'])
+def genKeyword():
+    text = request.args.get('sentence')
+    graph = sng_parser.parse(text)
+    majorKeyword = [x['span'] for x in graph['entities']]
+    return jsonify({"generatedKeywords": majorKeyword})
 
 if __name__ == '__main__':
     app.run()

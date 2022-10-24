@@ -5,10 +5,11 @@ import {
     Button,
     Row,
     Popover,
-    Space
+    Space,
+    List
   } from 'antd';
-  import React from 'react';
-  import { QuestionCircleOutlined } from '@ant-design/icons';
+  import React, {useState} from 'react';
+  import { QuestionCircleOutlined, AimOutlined } from '@ant-design/icons';
   
   const { TextArea } = Input;
   const { Title } = Typography;
@@ -29,13 +30,66 @@ import {
   ];
   
   const InputBox = ({ contexts, emotions, keywords, setContexts, setEmotions, setKeywords, resetAll, generate }) => {
+    const [open, setOpen] = useState(false);
+    const [listdata1, setListdata1] = useState([]);
+
+    const handleOpenChange = (newOpen) => {
+      try {
+        const url = new URL("http://35.239.173.52:5000/sngparser"); //35.239.173.52
+        url.searchParams.append('sentence', contexts);
+        fetch(url)
+          .then(data => data.json())
+          .then(data => {
+          // The line below is a declaration of a array
+            const kw = data.generatedKeywords
+            setListdata1(kw)  
+          })
+          .catch(e => console.error(e));
+        // set generatedText
+      } catch (err) {
+        console.log(err.message); //can be console.error
+      }
+      setOpen(newOpen);
+    };
+
     const printEmo = (checkedValues) =>{
       setEmotions(checkedValues)
     }
+
+    const onClickEach = (it) => {
+      // const kw = keywords
+      // const tmp = "; "
+      // if(keywords.length !== 0)
+      // {
+      //   setKeywords(kw.concat(tmp));
+      // }
+      setKeywords(keywords.concat(it))
+    }
+
     return (
       <>
         <Row>
           <Title level={2}>Contexts</Title>
+          <Popover
+            content={
+              <List
+                size="large"
+                bordered
+                dataSource={listdata1}
+                renderItem={(item) => 
+                <List.Item>
+                  {item}
+                  <Button onClick={() => onClickEach(item)} type="default" icon={<AimOutlined />} size="small"/>
+                </List.Item>}
+              />
+            }
+            title="NER keyword suggestions"
+            trigger="click"
+            open={open}
+            onOpenChange={handleOpenChange}
+          >
+            <Button type="default" icon={<AimOutlined />}/>
+          </Popover>
         </Row>
         <TextArea rows={4} value={contexts} onChange={(e) => setContexts(e.target.value)} maxLength={255} span={6} style={{ resize: 'none' }} bordered showCount />
         <br />
